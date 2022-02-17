@@ -1,0 +1,4 @@
+.git*
+*.tar.gz
+export_defaults.sh
+crontab
