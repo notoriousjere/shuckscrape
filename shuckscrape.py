@@ -1,4 +1,5 @@
 import os
+import re
 from croniter import croniter
 from datetime import datetime
 from selenium.webdriver import Remote
@@ -19,6 +20,7 @@ TARGET_MODEL = os.environ["TARGET_MODEL"]
 MAX_PRICE = float(os.environ["MAX_PRICE"])
 PRICE_MSG = f"{TARGET_CAPACITY} {TARGET_MODEL} costs ${{price:.2f}}"
 PRICE_FILE = "notified_price.txt"
+PRICE_REGEX = re.compile(r"\$(?P<price>\d{1,3}\.\d{2})")
 
 # shuckstop site info
 SHUCKS_URL = "https://shucks.top/"
@@ -71,7 +73,11 @@ class PriceChecker:
                     price = self.driver.find_element(
                         By.XPATH, f"//tr[{row}]/td[{COL_BB_PRICE}]"
                     ).text
-                    self.current_price = float(price[1:])
+                    price_match = PRICE_REGEX.search(price)
+                    if price_match:
+                        self.current_price = float(price_match.group("price"))
+                    else:
+                        raise ValueError("Could not extract price!")
                     self.product_row = row
                     break
                 except selenium_exc.NoSuchElementException as exc:
